@@ -11,7 +11,7 @@ pub mod proto;
 mod plugin {
     use super::proto::{self, relay};
     use pumpkin_plugin_api::events::{
-        EventHandler, EventPriority, PlayerCustomPayloadEvent, PlayerLeaveEvent,
+        EventHandler, EventPriority, PlayerCustomPayloadEvent, PlayerJoinEvent, PlayerLeaveEvent,
         PlayerRegisterChannelEvent, PlayerUnregisterChannelEvent,
     };
     use pumpkin_plugin_api::{Context, Plugin, PluginMetadata, Server, events_wit, register_plugin};
@@ -93,6 +93,22 @@ mod plugin {
         }
     }
 
+    /// Announces `nerion:vr` (`minecraft:register`) to each player who joins: Fabric clients only
+    /// send on channels the server announced.
+    struct Joined;
+    impl EventHandler<PlayerJoinEvent> for Joined {
+        fn handle(
+            &self,
+            _server: Server,
+            event: events_wit::PlayerJoinEventData,
+        ) -> events_wit::PlayerJoinEventData {
+            if let Some(java) = event.player.as_java() {
+                java.send_custom_payload("minecraft:register", proto::CHANNEL.as_bytes());
+            }
+            event
+        }
+    }
+
     struct Registered;
     impl EventHandler<PlayerRegisterChannelEvent> for Registered {
         fn handle(
@@ -171,6 +187,7 @@ mod plugin {
 
         fn on_load(&self, context: Context) -> Result<(), String> {
             context.register_event_handler::<PlayerCustomPayloadEvent, _>(Payloads, EventPriority::Normal, false)?;
+            context.register_event_handler::<PlayerJoinEvent, _>(Joined, EventPriority::Lowest, false)?;
             context.register_event_handler::<PlayerRegisterChannelEvent, _>(Registered, EventPriority::Normal, false)?;
             context.register_event_handler::<PlayerUnregisterChannelEvent, _>(Unregistered, EventPriority::Normal, false)?;
             context.register_event_handler::<PlayerLeaveEvent, _>(Left, EventPriority::Lowest, false)?;
