@@ -1,0 +1,21 @@
+[package]
+name = "nerion-vr-pumpkin"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Nerion VR poses (nerion:vr) on Pumpkin: forwards VR players' head and hands to the players around"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# The plugin API (v0.1) of the Pumpkin build Nerion ships on Android (pumpkin-android-9c04f71).
+pumpkin-plugin-api = { git = "https://github.com/Pumpkin-MC/Pumpkin", rev = "9c04f714bb7eb26579c652f9744895d465ee902b" }
+
+[dev-dependencies]
+serde_json = "1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
